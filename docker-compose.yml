@@ -1,0 +1,18 @@
+services:
+  web:
+    build: .
+    env_file:
+      - .env
+    ports:
+      - "8080:80"
+    depends_on:
+      - mqtt-bridge
+
+  mqtt-bridge:
+    image: eclipse-mosquitto:2
+    env_file:
+      - .env
+    volumes:
+      - ./docker/mosquitto/mosquitto.conf.template:/mosquitto/config/mosquitto.conf.template:ro
+      - ./docker/mosquitto/entrypoint.sh:/entrypoint.sh:ro
+    entrypoint: ["/entrypoint.sh"]

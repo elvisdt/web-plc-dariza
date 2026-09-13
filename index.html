@@ -11,6 +11,7 @@
 <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
+<div id="mqttStatus">MQTT: conectando...</div>
 <button id="fullscreenBtn" onclick="activarPantallaCompleta()">⛶</button>
 <!-- ========== LOGIN ========== -->
 <div id="loginScreen">
@@ -46,9 +47,9 @@
       <img id="tanque3Img" src="img/lleno.PNG" class="overlayImg" style="display:none; top:5.8%; left:80%; width:12.8%; height:36.4%;">
       <img id="alarmaImg" src="img/alarma.PNG" class="overlayImg" style="display:none; top:17%; left:65%; width:4%; height:8%;">
   </div>
-  <div id="rect7" class="rectangulo" style="top: 59%; left: 78%; width: 12%; height: 8%; font-size:1.5vw;">BOMBA 1</div>
-  <div id="rect8" class="rectangulo" style="top: 74%; left: 78%; width: 12%; height: 8%; font-size:1.5vw;">BOMBA 2</div>
-  <div id="rect11" class="rectangulo" style="top: 74%; left: 60%; width: 12%; height: 8%; font-size:1.5vw;">ALTERNADO</div>
+  <div id="rect7" class="rectangulo" style="top: 58%; left: 78%; width: 12%; height: 6%; font-size:1.3vw;">BOMBA 1</div>
+  <div id="rect8" class="rectangulo" style="top: 70.5%; left: 78%; width: 12%; height: 6%; font-size:1.3vw;">BOMBA 2</div>
+  <div id="rect11" class="rectangulo" style="top: 70.5%; left: 61%; width: 10%; height: 6%; font-size:1.3vw;">ALTERNADO</div>
   <div id="rect9" class="rectangulo" style="top: 58%; left: 27%; width: 10%; height: 6%; font-size:1.3vw;">AUTOMATICO</div>
   <div id="rect10" class="rectangulo" style="top: 70.5%; left: 27%; width: 10%; height: 6%; font-size:1.3vw;">MANUAL</div>
   <div class="botones-container">
@@ -60,12 +61,12 @@
           style="top:70.5%; left:27%; width:10%; height:6%; font-size:1.3vw; background-color:transparent; color:white;">
       </button>
 
-      <button class="boton-mqtt rectangulo start" data-msg="startbomba1" 
-          style="top:51.5%; left:10%; width:10%; height:6%; font-size:1.3vw; background-color:#2ea043; color:white;">
+      <button class="boton-mqtt rectangulo start" data-msg="startbomba1"
+          style="top:58%; left:10%; width:10%; height:6%; font-size:1.3vw; background-color:#2ea043; color:white;">
           START
       </button>
-      <button class="boton-mqtt rectangulo stop" data-msg="stopbomba1" 
-          style="top:64%; left:10%; width:10%; height:6%; font-size:1.3vw; background-color:#e5484d; color:white;">
+      <button class="boton-mqtt rectangulo stop" data-msg="stopbomba1"
+          style="top:70.5%; left:10%; width:10%; height:6%; font-size:1.3vw; background-color:#e5484d; color:white;">
           STOP
       </button>
 
@@ -87,21 +88,21 @@
           STOP
       </button>
 
-      <button class="boton-mqtt rectangulo reintentar" data-msg="reintentar" 
-          style="top:63%; left:61%; width:10%; height:6%; font-size:1.3vw; background-color:#f5b400; color:black;">
+      <button class="boton-mqtt rectangulo reintentar" data-msg="reintentar"
+          style="top:58%; left:61%; width:10%; height:6%; font-size:1.3vw; background-color:#f5b400; color:black;">
           REINTENTAR
       </button>
 
-      <button class="boton-mqtt rectangulo select" data-msg="selectbomba1" 
-          style="top:59%; left:78%; width:12%; height:8%; font-size:1.3vw; background-color:transparent; color:white;">
+      <button class="boton-mqtt rectangulo select" data-msg="selectbomba1"
+          style="top:58%; left:78%; width:12%; height:6%; font-size:1.3vw; background-color:transparent; color:white;">
       </button>
 
-      <button class="boton-mqtt rectangulo select" data-msg="selectbomba2" 
-          style="top:74%; left:78%; width:12%; height:8%; font-size:1.3vw; background-color:transparent; color:white;">
+      <button class="boton-mqtt rectangulo select" data-msg="selectbomba2"
+          style="top:70.5%; left:78%; width:12%; height:6%; font-size:1.3vw; background-color:transparent; color:white;">
       </button>
 
-      <button class="boton-mqtt rectangulo select" data-msg="selectalternado" 
-          style="top:74%; left:60%; width:12%; height:8%; font-size:1.3vw; background-color:transparent; color:white;">
+      <button class="boton-mqtt rectangulo select" data-msg="selectalternado"
+          style="top:70.5%; left:61%; width:10%; height:6%; font-size:1.3vw; background-color:transparent; color:white;">
       </button>
 
     <div id="rectPresion" class="rectangulo"
@@ -215,20 +216,18 @@
       <span id="frecuenciaValor2">Hz</span>
     </p>
   </div>
-  <div class="textoProcesoBox2" style="top: 74%; left: 8.8%; background: #fff3cd; border: 1px solid #000;">
-   <input id="inputFreqProceso" type="number" min="0" max="60" step="0.01"
-           style="width: 100%; height: 100%; font-size:1.2vw; font-weight:bold; text-align:center; border:none; background: #fff3cd; -moz-appearance:textfield; -webkit-appearance:none;">
+  <div class="valueInputBox" style="top: 74%; left: 8.8%; width: 28vw; height: 2.4vw; padding: 0 0.6vw;">
+   <button type="button" class="valueBtn" onclick="ajustarValor('inputFreqProceso', -1)">−</button>
+   <input id="inputFreqProceso" type="number" min="0" max="60" step="0.01" style="font-size:1.3vw;">
+   <span class="valueUnit" style="font-size:1.3vw;">Hz</span>
+   <button type="button" class="valueBtn" onclick="ajustarValor('inputFreqProceso', 1)">+</button>
   </div>
-  <div class="textoProcesoBox2" style="top: 74%; left: 60.8%; background: #fff3cd; border: 1px solid #000;">
-   <input id="inputFreq2Proceso" type="number" min="0" max="60" step="0.01"
-           style="width: 100%; height: 100%; font-size:1.2vw; font-weight:bold; text-align:center; border:none; background: #fff3cd; -moz-appearance:textfield; -webkit-appearance:none;">
+  <div class="valueInputBox" style="top: 74%; left: 60.8%; width: 28vw; height: 2.4vw; padding: 0 0.6vw;">
+   <button type="button" class="valueBtn" onclick="ajustarValor('inputFreq2Proceso', -1)">−</button>
+   <input id="inputFreq2Proceso" type="number" min="0" max="60" step="0.01" style="font-size:1.3vw;">
+   <span class="valueUnit" style="font-size:1.3vw;">Hz</span>
+   <button type="button" class="valueBtn" onclick="ajustarValor('inputFreq2Proceso', 1)">+</button>
   </div>
-  <div class="textoProcesoBoxTransparente" style="top: 73%; left: 32%;">
-     <p class="textoProcesoTransparente">Hz</p>
-   </div>
-  <div class="textoProcesoBoxTransparente" style="top: 73%; left: 82%;">
-     <p class="textoProcesoTransparente">Hz</p>
-   </div>
 </div>
 
 <div id="parametrosScreen" class="screen">
@@ -241,26 +240,25 @@
   <div class="textoProcesoBoxGrande" style="top: 65%; left: 20%;">
        <p class="textoProcesoGrande">CANTIDAD DE REINTENTOS<br>POR FALTA DE PRESIÓN</p>
   </div>
-  <div class="textoProcesoBoxGrande" style="top: 15%; left: 60%; background: #FFFF00; width: 12vw;">
-      <input id="inputRetardoPresion" type="number" min="0.0" max="60.0" step="0.1"
-             style="width: 100%; height: 100%; font-size:2vw; font-weight:bold; text-align:center; border:none; background:#fff3cd; -moz-appearance:textfield; -webkit-appearance:none;">
+  <div class="valueInputBox" style="top: 15%; left: 60%; width: 15vw; height: 4.5vw; padding: 0 0.8vw;">
+      <button type="button" class="valueBtn" onclick="ajustarValor('inputRetardoPresion', -1)">−</button>
+      <input id="inputRetardoPresion" type="number" min="0.0" max="60.0" step="0.1" style="font-size:1.6vw;">
+      <span class="valueUnit" style="font-size:1.2vw;">s</span>
+      <button type="button" class="valueBtn" onclick="ajustarValor('inputRetardoPresion', 1)">+</button>
   </div>
 
-  <div class="textoProcesoBoxGrande" style="top: 40%; left: 60%; background: #FFFF00; width: 12vw;">
-      <input id="inputPresionMinima" type="number" min="0.00" max="145.00" step="0.01"
-             style="width: 100%; height: 100%; font-size:2vw; font-weight:bold; text-align:center; border:none; background:#fff3cd; -moz-appearance:textfield; -webkit-appearance:none;">
+  <div class="valueInputBox" style="top: 40%; left: 60%; width: 15vw; height: 4.5vw; padding: 0 0.8vw;">
+      <button type="button" class="valueBtn" onclick="ajustarValor('inputPresionMinima', -1)">−</button>
+      <input id="inputPresionMinima" type="number" min="0.00" max="145.00" step="0.01" style="font-size:1.6vw;">
+      <span class="valueUnit" style="font-size:1.2vw;">psi</span>
+      <button type="button" class="valueBtn" onclick="ajustarValor('inputPresionMinima', 1)">+</button>
   </div>
 
-  <div class="textoProcesoBoxGrande" style="top: 65%; left: 60%; background: #FFFF00; width: 12vw;">
-      <input id="inputReintentos" type="number" min="1" max="10" step="1"
-             style="width: 100%; height: 100%; font-size:2vw; font-weight:bold; text-align:center; border:none; background:#fff3cd; -moz-appearance:textfield; -webkit-appearance:none;">
+  <div class="valueInputBox" style="top: 65%; left: 60%; width: 15vw; height: 4.5vw; padding: 0 0.8vw;">
+      <button type="button" class="valueBtn" onclick="ajustarValor('inputReintentos', -1)">−</button>
+      <input id="inputReintentos" type="number" min="1" max="10" step="1" style="font-size:1.6vw;">
+      <button type="button" class="valueBtn" onclick="ajustarValor('inputReintentos', 1)">+</button>
   </div>
-  <div class="textoProcesoBoxTransparente" style="top: 15.2%; left: 69%;">
-     <p class="textoProcesoTransparente">s</p>
-   </div>
-  <div class="textoProcesoBoxTransparente" style="top: 40.2%; left: 69%;">
-     <p class="textoProcesoTransparente">psi</p>
-   </div>
 </div>
 
 <div id="diagnosticoScreen" class="screen">
@@ -289,9 +287,9 @@
                  z-index: 0;">
      </div>
 
-     <div class="rectangulo" 
-          style="top: 5%; left: 53%; width: 39%; height: 80%; 
-                 background: var(--color-accent-light); border: 1px solid #000; 
+     <div class="rectangulo"
+          style="top: 5%; left: 53%; width: 39%; height: 45%;
+                 background: var(--color-accent-light); border: 1px solid #000;
                  z-index: 0;">
      </div>
 

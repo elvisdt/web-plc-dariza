@@ -20,8 +20,16 @@ const frecuencia2Span = document.getElementById("frecuenciaValor2");
 
 const presionpsiSpan = document.getElementById("presionpsi");
 const alarmaImg = document.getElementById("alarmaImg");
+const mqttStatusEl = document.getElementById("mqttStatus");
+function setMqttStatus(texto, clase) {
+    if (!mqttStatusEl) return;
+    mqttStatusEl.textContent = "MQTT: " + texto;
+    mqttStatusEl.className = clase;
+}
+
 client.on("connect", () => {
     console.log("[MQTT] Conectado:", MQTT_BROKER_URL);
+    setMqttStatus("conectado", "mqtt-ok");
     client.subscribe(topicVar, (err) => {
         if (err) console.error("[MQTT] Error suscribiendo a", topicVar, err);
         else console.log("[MQTT] Suscrito a", topicVar);
@@ -31,10 +39,22 @@ client.on("connect", () => {
         else console.log("[MQTT] Suscrito a", topicIO);
     });
 });
-client.on("error", (err) => console.error("[MQTT] Error de conexión:", err));
-client.on("reconnect", () => console.warn("[MQTT] Reconectando..."));
-client.on("close", () => console.warn("[MQTT] Conexión cerrada"));
-client.on("offline", () => console.warn("[MQTT] Cliente offline"));
+client.on("error", (err) => {
+    console.error("[MQTT] Error de conexión:", err);
+    setMqttStatus("error de conexión", "mqtt-error");
+});
+client.on("reconnect", () => {
+    console.warn("[MQTT] Reconectando...");
+    setMqttStatus("reconectando...", "mqtt-error");
+});
+client.on("close", () => {
+    console.warn("[MQTT] Conexión cerrada");
+    setMqttStatus("desconectado", "mqtt-error");
+});
+client.on("offline", () => {
+    console.warn("[MQTT] Cliente offline");
+    setMqttStatus("sin conexión", "mqtt-error");
+});
 
 let sincronizadoProceso = false; // para las frecuencias
 let sincronizadoIO = false;      // para H308, H309, H310

@@ -1,0 +1,26 @@
+# Broker local que actua como "conector": expone MQTT sobre WebSocket
+# para el navegador y reenvia todo al broker real via bridge.
+# Este archivo es una PLANTILLA (sin secretos) - los valores __VAR__ se
+# reemplazan al arrancar el contenedor usando variables del .env.
+
+persistence false
+allow_anonymous true
+
+# Listener para el bridge saliente (no usado por el navegador directamente)
+listener 1883 0.0.0.0
+protocol mqtt
+
+# Listener WebSocket que consume el frontend (a traves del proxy de nginx)
+listener 9001 0.0.0.0
+protocol websockets
+
+# ====== BRIDGE HACIA EL BROKER REAL ======
+connection bridge-remoto
+address __MQTT_REMOTE_HOST__:__MQTT_REMOTE_PORT__
+topic lurin/factory/bombas/# both 0
+remote_username __MQTT_REMOTE_USER__
+remote_password __MQTT_REMOTE_PASS__
+bridge_protocol_version mqttv311
+cleansession true
+notifications false
+try_private false

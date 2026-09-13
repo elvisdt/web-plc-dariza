@@ -3,8 +3,6 @@ function login() {
   const pass = document.getElementById("password").value.trim();
 
   if (user === APP_USER && pass === APP_PASS) {
-      activarPantallaCompleta(); // FULL SCREEN
-
       document.getElementById("loginScreen").style.display = "none";
 
       // Mostrar botones de navegación
@@ -32,6 +30,23 @@ function showScreen(screenId) {
 
   document.getElementById(screenId).style.display = "flex";
 }
+function ajustarValor(id, sentido) {
+  const input = document.getElementById(id);
+  if (!input) return;
+
+  const step = parseFloat(input.step) || 1;
+  const min = input.min !== "" ? parseFloat(input.min) : -Infinity;
+  const max = input.max !== "" ? parseFloat(input.max) : Infinity;
+  const decimales = (input.step.split(".")[1] || "").length;
+
+  let v = parseFloat(input.value) || 0;
+  v = Math.min(max, Math.max(min, v + sentido * step));
+  input.value = v.toFixed(decimales);
+
+  input.dispatchEvent(new Event("input"));
+  input.dispatchEvent(new Event("blur"));
+}
+
 function activarPantallaCompleta() {
   const elem = document.documentElement;
   if (elem.requestFullscreen) elem.requestFullscreen();
