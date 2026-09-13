@@ -21,16 +21,27 @@ const frecuencia2Span = document.getElementById("frecuenciaValor2");
 const presionpsiSpan = document.getElementById("presionpsi");
 const alarmaImg = document.getElementById("alarmaImg");
 client.on("connect", () => {
-    console.log("Conectado a MQTT");
-    client.subscribe(topicVar);
-    client.subscribe(topicIO);  // Suscribirse al topic de I/O
+    console.log("[MQTT] Conectado:", MQTT_BROKER_URL);
+    client.subscribe(topicVar, (err) => {
+        if (err) console.error("[MQTT] Error suscribiendo a", topicVar, err);
+        else console.log("[MQTT] Suscrito a", topicVar);
+    });
+    client.subscribe(topicIO, (err) => {
+        if (err) console.error("[MQTT] Error suscribiendo a", topicIO, err);
+        else console.log("[MQTT] Suscrito a", topicIO);
+    });
 });
+client.on("error", (err) => console.error("[MQTT] Error de conexión:", err));
+client.on("reconnect", () => console.warn("[MQTT] Reconectando..."));
+client.on("close", () => console.warn("[MQTT] Conexión cerrada"));
+client.on("offline", () => console.warn("[MQTT] Cliente offline"));
 
 let sincronizadoProceso = false; // para las frecuencias
 let sincronizadoIO = false;      // para H308, H309, H310
 let lastStatus1 = "DESCONOCIDO";
 let lastStatus2 = "DESCONOCIDO";
 client.on("message", (topic, message) => {
+    console.log("[MQTT] Mensaje recibido en", topic, "->", message.toString());
     try {
         const data = JSON.parse(message.toString());
 
