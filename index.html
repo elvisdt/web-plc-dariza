@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>DARIZA SCADA IOT </title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#ffffff">
+
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+#fullscreenBtn {
+  position: fixed;
+  top: 15px;
+  right: 15px;
+  background: transparent;   /* 👈 sin fondo */
+  color: #0f62fe;            /* 👈 solo icono azul */
+  border: none;
+  font-size: 2rem;           /* 👈 icono más bonito */
+  cursor: pointer;
+  z-index: 9999;
+  display: block;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #fff;
+  color: #333;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.screen {
+  display: none;
+  flex-direction: column; /* si usas flex */
+  width: 100%;
+  height: 100%;
+}
+
+#loginScreen {
+  display: flex; /* visible al inicio */
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+
+#loginBox {
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  width: 320px;
+  background: #fafafa;
+  box-shadow: 0 0 12px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#loginLogo {
+  width: 320px;
+  height: 230px;
+  margin-bottom: 15px;
+}
+
+#loginLogo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+#loginBox input {
+  width: 100%;
+  padding: 10px;
+  margin-top: 12px;
+  font-size: 1em;
+  border-radius: 8px;
+  border: 1px solid #bbb;
+}
+
+#loginBox button {
+  width: 100%;
+  margin-top: 18px;
+  padding: 10px;
+  background: #22a6b3;
+  color: white;
+  font-size: 1.1em;
+  cursor: pointer;
+  border: none;
+  border-radius: 8px;
+  transition: 0.2s;
+}
+#loginBox button:hover { background: #0984e3; }
+
+
+/* ========= PANTALLA PRINCIPAL ========= */
+#mainScreen {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  width: 100%;
+  padding-bottom: 90px;
+  box-sizing: border-box;
+}
+
+#hmiContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+}
+
+#logoContainer {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-top: 20px;
+}
+
+#logoContainer img {
+  width: 80%;
+  height: auto;
+  object-fit: contain;
+}
+
+/* Rectángulo flotante y responsive */
+.rectangulo {
+    width: 7%;                   
+    aspect-ratio: 1.5/1;   
+    background-color: red;    
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 2%;     
+    font-size: 2vw;        
+    font-weight: bold;
+    transition: 0.3s ease;  
+    position: absolute;     
+}
+.fullScreenContainer {
+    position: fixed;   /* se fija al viewport */
+    top: 0;
+    left: 0;
+    width: 100vw;      /* 100% del ancho del viewport */
+    height: 100vh;     /* 100% del alto del viewport */
+    overflow: hidden;  /* evita scroll si algo sobresale */
+    z-index: 0;
+}
+
+.img-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 89%;
+    object-fit: fill; /* llena todo el contenedor, recorta si hace falta */
+    z-index: -1;       /* detrás de los botones */
+}
+
+.overlayImg {
+    position: absolute; /* ya estaban en inline-style, pero mejor CSS */
+    z-index: 1;         /* al frente del fondo */
+    object-fit: fill; /* mantiene proporciones de la imagen */
+}
+.botones-container {
+    z-index: 10;
+}
+/* RESPONSIVO PARA MÓVIL */
+@media (max-width: 768px) {
+  .rectangulo {
+    width: 6vw; /* 10% del ancho de la pantalla */
+    height: 10vh;
+    font-size: 2.5vw;
+  }
+}
+
+.textoProcesoBox {
+  position: absolute;
+
+  display: flex;
+  justify-content: center;    /* centra horizontal */
+  align-items: center;        /* centra vertical */
+
+  padding: 0.5vw 1vw;
+
+  background: #0f62fe;
+  border: 0.15vw solid #0a4ec4;
+  border-radius: 0.3vw;
+
+  box-shadow: 0 0 0.6vw rgba(0,0,0,0.25);
+
+  white-space: normal;        /* 👈 ahora sí permite multilinea */
+  text-align: center;         /* 👈 centra cada línea */
+}
+.textoProceso {
+  font-size: 1.2vw;
+  color: white;
+  font-weight: bold;
+  margin: 0;
+}
+/* === CUADRO ESPECIAL MÁS GRANDE (SOLO PARA PARAMETROS) === */
+.textoProcesoBoxGrande {
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  padding: 0.5vw 1vw;
+
+  background: #06E3E8;
+  border: 1px solid #000000;
+  border-radius: 0.5vw;
+
+  box-shadow: 0 0 1vw rgba(0,0,0,0.25);
+
+  white-space: normal;
+  text-align: center;
+
+  width: 34vw;   /* 👈 MÁS ANCHO */
+  height: 6vw;   /* 👈 MÁS ALTO */
+  z-index: 10;
+}
+
+.textoProcesoGrande {
+  font-size: 2vw;  /* 👈 LETRA MÁS GRANDE */
+  color: black;
+  font-weight: bold;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.textoProcesoBox2 {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;   /* 👈 CENTRA verticalmente */
+  align-items: flex-start;
+
+  width: 28vw;
+  height: 2.4vw;             /* 👈 un poquito más alto para que respire */
+
+  padding: 12px 10px;        /* 👈 más espacio uniforme arriba/abajo */
+  background: #C2F1FA;
+  border: 1px solid #000000;
+  border-radius: 3px;
+  box-shadow: 0 0 6px rgba(0,0,0,0.25);
+  z-index: 10;
+}
+
+
+.textoProceso2 {
+  font-size: 1.2vw;
+  color: black;
+  text-align: left;
+  font-weight: bold;
+  margin: 0;
+
+  display: flex;
+  justify-content: space-between; 
+  width: 96%; /* Ajusta la separación automáticamente */
+}
+/* ===== CUADRO TRANSPARENTE SOLO TEXTO ===== */
+.textoProcesoBoxTransparente {
+  position: absolute;
+  display: flex;
+  justify-content: left;
+  align-items: center;
+
+  padding: 0.5vw 1vw;
+
+  background: transparent;      /* SIN FONDO */
+  border: none;                 /* SIN BORDE */
+  box-shadow: none;             /* SIN SOMBRA */
+
+  white-space: normal;
+  text-align: left;
+
+  width: 34vw;                  /* igual que textoProcesoBoxGrande */
+  height: 6vw;                  /* igual que textoProcesoBoxGrande */
+  z-index: 15;
+}
+
+.textoProcesoTransparente {
+  font-size: 2vw;               /* igual que textoProcesoGrande */
+  color: black;                 /* color del texto */
+  font-weight: bold;
+  margin: 0;
+  line-height: 1.2;
+}
+/* Quitar flechas de los inputs type=number */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+input[type=number] {
+    -moz-appearance: textfield; /* Firefox */
+}
+
+</style>
+</head>
+<body>
+<button id="fullscreenBtn" onclick="activarPantallaCompleta()">⛶</button>
+<!-- ========== LOGIN ========== -->
+<div id="loginScreen">
+  <div id="loginBox">
+    <div id="loginLogo">
+      <img src="logo.jpg" alt="Logo" />
+    </div>
+
+    <h2>Ingresar</h2>
+    <input id="usuario" type="text" placeholder="Usuario">
+    <input id="password" type="password" placeholder="Contraseña">
+    <button onclick="login()">Entrar</button>
+    <p id="mensaje" style="color:red; margin-top:10px;"></p>
+  </div>
+</div>
+
+<!-- ========== PANTALLA PRINCIPAL ========== -->
+<div id="mainScreen" class="screen">
+  <div id="hmiContainer">
+    <div id="logoContainer">
+      <img src="logo.jpg" alt="LOGO">
+    </div>
+  </div>
+</div>
+
+<!-- ========== OTRAS PANTALLAS ========== -->
+
+<div id="procesoScreen" class="screen">
+  <div class="fullScreenContainer">
+      <img src="esquema.PNG" class="img-container">
+      <img id="tanque1Img" src="lleno.PNG" class="overlayImg" style="display:none; top:5.8%; left:10%; width:12.8%; height:36.4%;">
+      <img id="tanque2Img" src="lleno.PNG" class="overlayImg" style="display:none; top:5.8%; left:25%; width:12.8%; height:36.4%;">
+      <img id="tanque3Img" src="lleno.PNG" class="overlayImg" style="display:none; top:5.8%; left:80%; width:12.8%; height:36.4%;">
+      <img id="alarmaImg" src="alarma.PNG" class="overlayImg" style="display:none; top:17%; left:65%; width:4%; height:8%;">
+  </div>
+  <div id="rect7" class="rectangulo" style="top: 59%; left: 78%; width: 12%; height: 8%; font-size:1.5vw;">BOMBA 1</div>
+  <div id="rect8" class="rectangulo" style="top: 74%; left: 78%; width: 12%; height: 8%; font-size:1.5vw;">BOMBA 2</div>
+  <div id="rect11" class="rectangulo" style="top: 74%; left: 60%; width: 12%; height: 8%; font-size:1.5vw;">ALTERNADO</div>
+  <div id="rect9" class="rectangulo" style="top: 58%; left: 27%; width: 10%; height: 6%; font-size:1.3vw;">AUTOMATICO</div>
+  <div id="rect10" class="rectangulo" style="top: 70.5%; left: 27%; width: 10%; height: 6%; font-size:1.3vw;">MANUAL</div>
+  <div class="botones-container">
+      <button class="boton-mqtt rectangulo automatico" data-msg="automatico" 
+          style="top:58%; left:27%; width:10%; height:6%; font-size:1.3vw; background-color: transparent; color:white;">
+      </button>
+
+      <button class="boton-mqtt rectangulo manual" data-msg="manual" 
+          style="top:70.5%; left:27%; width:10%; height:6%; font-size:1.3vw; background-color:transparent; color:white;">
+      </button>
+
+      <button class="boton-mqtt rectangulo start" data-msg="startbomba1" 
+          style="top:51.5%; left:10%; width:10%; height:6%; font-size:1.3vw; background-color:#00FF00; color:black;">
+          START
+      </button>
+      <button class="boton-mqtt rectangulo stop" data-msg="stopbomba1" 
+          style="top:64%; left:10%; width:10%; height:6%; font-size:1.3vw; background-color:#FF0000; color:white;">
+          STOP
+      </button>
+
+      <button class="boton-mqtt rectangulo start" data-msg="startbomba2" 
+          style="top:58%; left:45%; width:10%; height:6%; font-size:1.3vw; background-color:#00FF00; color:black;">
+          START
+      </button>
+      <button class="boton-mqtt rectangulo stop" data-msg="stopbomba2" 
+          style="top:70.5%; left:45%; width:10%; height:6%; font-size:1.3vw; background-color:#FF0000; color:white;">
+          STOP
+      </button>
+
+      <button class="boton-mqtt rectangulo start" data-msg="startbomba3" 
+          style="top:5%; left:42%; width:10%; height:6%; font-size:1.3vw; background-color:#00FF00; color:black;">
+          START
+      </button>
+      <button class="boton-mqtt rectangulo stop" data-msg="stopbomba3" 
+          style="top:5%; left:55%; width:10%; height:6%; font-size:1.3vw; background-color:#FF0000; color:white;">
+          STOP
+      </button>
+
+      <button class="boton-mqtt rectangulo reintentar" data-msg="reintentar" 
+          style="top:63%; left:61%; width:10%; height:6%; font-size:1.3vw; background-color:#FFFF66; color:black;">
+          REINTENTAR
+      </button>
+
+      <button class="boton-mqtt rectangulo select" data-msg="selectbomba1" 
+          style="top:59%; left:78%; width:12%; height:8%; font-size:1.3vw; background-color:transparent; color:white;">
+      </button>
+
+      <button class="boton-mqtt rectangulo select" data-msg="selectbomba2" 
+          style="top:74%; left:78%; width:12%; height:8%; font-size:1.3vw; background-color:transparent; color:white;">
+      </button>
+
+      <button class="boton-mqtt rectangulo select" data-msg="selectalternado" 
+          style="top:74%; left:60%; width:12%; height:8%; font-size:1.3vw; background-color:transparent; color:white;">
+      </button>
+
+    <div id="rectPresion" class="rectangulo"
+     	   style="top:46%; left:61%; width:10%; height:6%; font-size:1.3vw; background-color:transparent; color:black;">
+    	   <span id="presionpsi">psi</span>
+	</div>
+	<div id="rectV1" class="rectangulo" 
+	     style="top: 71.7%; left: 12%; width: 2%; height: 4.5%; border-radius:50%;">
+	</div>
+
+	<div id="rectV2Y0" class="rectangulo" 
+	     style="top: 36.4%; left: 53%; width: 2%; height: 4.5%; border-radius:50%;">
+	</div>
+
+	<div id="rectV2Y1" class="rectangulo" 
+	     style="top: 12.1%; left: 53.2%; width: 2%; height: 4.5%; border-radius:50%;">
+	</div>
+
+  </div>
+
+  <!-- CUADROS DE TEXTO -->
+  <div class="textoProcesoBox" style="top: 48%; left: 25%;">
+      <p class="textoProceso">MODO DE TRABAJO</p>
+  </div>
+
+  <div class="textoProcesoBox" style="top: 48%; left: 76%;">
+      <p class="textoProceso">BOMBA DE SUMINISTRO</p>
+  </div>
+</div>
+
+
+
+<div id="monitoreoScreen" class="screen">
+  <!-- TITULOS DE VARIADORES -->
+  <div class="textoProcesoBox" style="top: 3%; left: 16%;">
+     <p class="textoProceso">VARIADOR DE BOMBA<br>SUMERGIBLE</p>
+  </div>
+
+  <div class="textoProcesoBox" style="top: 3%; left: 67.9%;">
+     <p class="textoProceso">VARIADOR DE BOMBAS<br>DE SUMINISTRO</p>
+  </div>
+
+  <!-- PRIMER BLOQUE DE MONITOREO -->
+  <div class="textoProcesoBox2" style="top: 14%; left: 8.8%;">
+     <p class="textoProceso2">
+       <span>ESTADO:</span>
+       <span id="estadoValor">DESCONOCIDO</span>
+     </p>
+  </div>
+
+  <div class="textoProcesoBox2" style="top: 26%; left: 8.8%;">
+    <p class="textoProceso2">
+      <span>POTENCIA:</span>
+      <span id="potenciaValor">KW</span>
+    </p>
+  </div>
+
+  <div class="textoProcesoBox2" style="top: 38%; left: 8.8%;">
+    <p class="textoProceso2">
+      <span>CORRIENTE:</span>
+      <span id="corrienteValor">A</span>
+    </p>
+  </div>
+
+  <div class="textoProcesoBox2" style="top: 50%; left: 8.8%;">
+    <p class="textoProceso2">
+      <span>VOLTAJE:</span>
+      <span id="voltajeValor">V</span>
+    </p>
+  </div>
+
+  <div class="textoProcesoBox2" style="top: 62%; left: 8.8%;">
+    <p class="textoProceso2">
+      <span>FRECUENCIA:</span>
+      <span id="frecuenciaValor">HZ</span>
+    </p>
+  </div>
+
+  <!-- SEGUNDO BLOQUE DE MONITOREO (SI QUIERES) -->
+  <div class="textoProcesoBox2" style="top: 14%; left: 60.8%;">
+     <p class="textoProceso2">
+       <span>ESTADO:</span>
+       <span id="estadoValor2">DESCONOCIDO</span>
+     </p>
+  </div>
+
+  <div class="textoProcesoBox2" style="top: 26%; left: 60.8%;">
+    <p class="textoProceso2">
+      <span>POTENCIA:</span>
+      <span id="potenciaValor2">kW</span>
+    </p>
+  </div>
+
+  <div class="textoProcesoBox2" style="top: 38%; left: 60.8%;">
+    <p class="textoProceso2">
+      <span>CORRIENTE:</span>
+      <span id="corrienteValor2">A</span>
+    </p>
+  </div>
+
+  <div class="textoProcesoBox2" style="top: 50%; left: 60.8%;">
+    <p class="textoProceso2">
+      <span>VOLTAJE:</span>
+      <span id="voltajeValor2">V</span>
+    </p>
+  </div>
+
+  <div class="textoProcesoBox2" style="top: 62%; left: 60.8%;">
+    <p class="textoProceso2">
+      <span>FRECUENCIA:</span>
+      <span id="frecuenciaValor2">Hz</span>
+    </p>
+  </div>
+  <div class="textoProcesoBox2" style="top: 74%; left: 8.8%; background: yellow; border: 1px solid #000;">
+   <input id="inputFreqProceso" type="number" min="0" max="60" step="0.01"
+           style="width: 100%; height: 100%; font-size:1.2vw; font-weight:bold; text-align:center; border:none; background: yellow; -moz-appearance:textfield; -webkit-appearance:none;">
+  </div>
+  <div class="textoProcesoBox2" style="top: 74%; left: 60.8%; background: yellow; border: 1px solid #000;">
+   <input id="inputFreq2Proceso" type="number" min="0" max="60" step="0.01"
+           style="width: 100%; height: 100%; font-size:1.2vw; font-weight:bold; text-align:center; border:none; background: yellow; -moz-appearance:textfield; -webkit-appearance:none;">
+  </div>
+  <div class="textoProcesoBoxTransparente" style="top: 73%; left: 32%;">
+     <p class="textoProcesoTransparente">Hz</p>
+   </div>
+  <div class="textoProcesoBoxTransparente" style="top: 73%; left: 82%;">
+     <p class="textoProcesoTransparente">Hz</p>
+   </div>
+</div>
+
+<div id="parametrosScreen" class="screen">
+  <div class="textoProcesoBoxGrande" style="top: 15%; left: 20%;">
+       <p class="textoProcesoGrande">RETARDO DE TOLERANCIA<br>DE GARANTÍA DE PRESIÓN</p>
+  </div>
+  <div class="textoProcesoBoxGrande" style="top: 40%; left: 20%;">
+       <p class="textoProcesoGrande">PRESIÓN MÍNIMA DE<br>SUMINISTRO</p>
+  </div>
+  <div class="textoProcesoBoxGrande" style="top: 65%; left: 20%;">
+       <p class="textoProcesoGrande">CANTIDAD DE REINTENTOS<br>POR FALTA DE PRESIÓN</p>
+  </div>
+  <div class="textoProcesoBoxGrande" style="top: 15%; left: 60%; background: #FFFF00; width: 12vw;">
+      <input id="inputRetardoPresion" type="number" min="0.0" max="60.0" step="0.1"
+             style="width: 100%; height: 100%; font-size:2vw; font-weight:bold; text-align:center; border:none; background:#FFFF00; -moz-appearance:textfield; -webkit-appearance:none;">
+  </div>
+
+  <div class="textoProcesoBoxGrande" style="top: 40%; left: 60%; background: #FFFF00; width: 12vw;">
+      <input id="inputPresionMinima" type="number" min="0.00" max="145.00" step="0.01"
+             style="width: 100%; height: 100%; font-size:2vw; font-weight:bold; text-align:center; border:none; background:#FFFF00; -moz-appearance:textfield; -webkit-appearance:none;">
+  </div>
+
+  <div class="textoProcesoBoxGrande" style="top: 65%; left: 60%; background: #FFFF00; width: 12vw;">
+      <input id="inputReintentos" type="number" min="1" max="10" step="1"
+             style="width: 100%; height: 100%; font-size:2vw; font-weight:bold; text-align:center; border:none; background:#FFFF00; -moz-appearance:textfield; -webkit-appearance:none;">
+  </div>
+  <div class="textoProcesoBoxTransparente" style="top: 15.2%; left: 69%;">
+     <p class="textoProcesoTransparente">s</p>
+   </div>
+  <div class="textoProcesoBoxTransparente" style="top: 40.2%; left: 69%;">
+     <p class="textoProcesoTransparente">psi</p>
+   </div>
+</div>
+
+<div id="diagnosticoScreen" class="screen">
+     <!-- Texto arriba de Entradas -->
+     <div class="rectangulo" 
+          style="top: 8%; left: 5%; width: 42%; height: 5%;
+                background: transparent; border: none; 
+                color: #0033CC; font-size: 2.4vw;
+                z-index: 1;">
+        ENTRADAS
+     </div>
+
+     <!-- Texto arriba de Salidas -->
+     <div class="rectangulo" 
+          style="top: 8%; left: 53%; width: 42%; height: 5%;
+                 background: transparent; border: none; 
+                 color: #0033CC; font-size: 2.4vw;
+                 z-index: 1;">
+         SALIDAS
+     </div>
+
+     <!-- Rectángulos de fondo para Entradas y Salidas -->
+     <div class="rectangulo" 
+          style="top: 5%; left: 5%; width: 39%; height: 80%; 
+                 background: #b5dcff; border: 1px solid #000; 
+                 z-index: 0;">
+     </div>
+
+     <div class="rectangulo" 
+          style="top: 5%; left: 53%; width: 39%; height: 80%; 
+                 background: #b5dcff; border: 1px solid #000; 
+                 z-index: 0;">
+     </div>
+
+     <div id="rect1" class="rectangulo" style="top: 19%; left: 8%;">X0</div>
+     <div id="rect2" class="rectangulo" style="top: 36%; left: 8%;">X1</div>
+     <div id="rect3" class="rectangulo" style="top: 53%; left: 8%;">X2</div>
+     <div id="rect4" class="rectangulo" style="top: 70%; left: 8%;">X3</div>
+
+     <div class="textoProcesoBoxTransparente" style="top: 17%; left: 15.3%;">
+       <p class="textoProcesoTransparente">BOYA 1</p>
+     </div>
+     <div class="textoProcesoBoxTransparente" style="top: 34%; left: 15.3%;">
+       <p class="textoProcesoTransparente">BOYA 2</p>
+     </div>
+     <div class="textoProcesoBoxTransparente" style="top: 51%; left: 15.3%;">
+       <p class="textoProcesoTransparente">SOLICITUD (BOYA 3)</p>
+     </div>
+     <div class="textoProcesoBoxTransparente" style="top: 68%; left: 15.3%;">
+       <p class="textoProcesoTransparente">PARADA DE EMERGENCIA</p>
+     </div>
+
+     <div id="rect5" class="rectangulo" style="top: 19%; left: 56%;">Y0</div>
+     <div id="rect6" class="rectangulo" style="top: 36%; left: 56%;">Y1</div>
+     <div class="textoProcesoBoxTransparente" style="top: 17%; left: 63.3%;">
+       <p class="textoProcesoTransparente">BOMBA IZQUIERDA</p>
+     </div>
+     <div class="textoProcesoBoxTransparente" style="top: 34%; left: 63.3%;">
+       <p class="textoProcesoTransparente">BOMBA DERECHA</p>
+     </div>
+</div>
+
+<div id="navButtons" class="fullScreenContainer" style="display:none;">
+    <button class="rectangulo" 
+        style="top: 90%; left: 4.2%; width: 15%; height: 8%; background:#0f62fe; color:white; border-radius:3px; border:none; font-size:1.9vw; font-weight:bold; cursor:pointer;" 
+        onclick="showScreen('mainScreen')">
+        PRINCIPAL
+    </button>
+
+    <button class="rectangulo" 
+        style="top: 90%; left: 23.3%; width: 15%; height: 8%; background:#0f62fe; color:white; border-radius:3px; border:none; font-size:1.9vw; font-weight:bold; cursor:pointer;" 
+        onclick="showScreen('procesoScreen')">
+        PROCESO
+    </button>
+
+    <button class="rectangulo" 
+        style="top: 90%; left: 42.5%; width: 15%; height: 8%; background:#0f62fe; color:white; border-radius:3px; border:none; font-size:1.9vw; font-weight:bold; cursor:pointer;" 
+        onclick="showScreen('monitoreoScreen')">
+        MONITOREO
+    </button>
+
+    <button class="rectangulo" 
+        style="top: 90%; left: 61.7%; width: 15%; height: 8%; background:#0f62fe; color:white; border-radius:3px; border:none; font-size:1.9vw; font-weight:bold; cursor:pointer;" 
+        onclick="showScreen('parametrosScreen')">
+        PARAMETROS
+    </button>
+
+    <button class="rectangulo" 
+        style="top: 90%; left: 80.8%; width: 15%; height: 8%; background:#0f62fe; color:white; border-radius:3px; border:none; font-size:1.9vw; font-weight:bold; cursor:pointer;" 
+        onclick="showScreen('diagnosticoScreen')">
+        DIAGNOSTICO
+    </button>
+</div>
+
+
+
+<script>
+function login() {
+  const user = document.getElementById("usuario").value.trim();
+  const pass = document.getElementById("password").value.trim();
+
+  if (user === "dariza2025" && pass === "dariza2025iot") {
+      activarPantallaCompleta(); // FULL SCREEN
+
+      document.getElementById("loginScreen").style.display = "none";
+
+      // Mostrar botones de navegación
+      document.getElementById("navButtons").style.display = "flex";
+
+      showScreen("mainScreen");
+  } else {
+      document.getElementById("mensaje").innerText = "Credenciales incorrectas";
+  }
+}
+
+
+function showScreen(screenId) {
+  const screens = [
+    "mainScreen",
+    "procesoScreen",
+    "monitoreoScreen",
+    "parametrosScreen",
+    "diagnosticoScreen"
+  ];
+
+  screens.forEach(id => {
+    document.getElementById(id).style.display = "none";
+  });
+
+  document.getElementById(screenId).style.display = "flex";
+}
+function activarPantallaCompleta() {
+  const elem = document.documentElement;
+  if (elem.requestFullscreen) elem.requestFullscreen();
+  else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+  else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
+}
+
+</script>
+<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+<script>
+const topicVar = "lurin/factory/bombas/var";
+const topicIO  = "lurin/factory/bombas/io";
+const client = mqtt.connect("wss://broker.hivemq.com:8884/mqtt");
+
+// ====== SPANS VARIADOR 1 ======
+const estadoSpan = document.getElementById("estadoValor");
+const potenciaSpan = document.getElementById("potenciaValor");
+const corrienteSpan = document.getElementById("corrienteValor");
+const voltajeSpan = document.getElementById("voltajeValor");
+const frecuenciaSpan = document.getElementById("frecuenciaValor");
+
+// ====== SPANS VARIADOR 2 ======
+const estado2Span = document.getElementById("estadoValor2");
+const potencia2Span = document.getElementById("potenciaValor2");
+const corriente2Span = document.getElementById("corrienteValor2");
+const voltaje2Span = document.getElementById("voltajeValor2");
+const frecuencia2Span = document.getElementById("frecuenciaValor2");
+
+const presionpsiSpan = document.getElementById("presionpsi");
+const alarmaImg = document.getElementById("alarmaImg");
+client.on("connect", () => {
+    console.log("Conectado a MQTT");
+    client.subscribe(topicVar);
+    client.subscribe(topicIO);  // Suscribirse al topic de I/O
+});
+
+let sincronizadoProceso = false; // para las frecuencias
+let sincronizadoIO = false;      // para H308, H309, H310
+let lastStatus1 = "DESCONOCIDO";
+let lastStatus2 = "DESCONOCIDO";
+client.on("message", (topic, message) => {
+    try {
+        const data = JSON.parse(message.toString());
+
+        if (topic === topicVar) {
+            // ====== VARIADOR 1 ======
+            const freq1 = (data.H100 / 100).toFixed(2);
+            const volt1 = data.H101.toFixed(0);
+            const amp1  = (data.H102 / 100).toFixed(2);
+            const pot1  = (data.H103 / 10).toFixed(2);
+            const status1 = data.Status1 || "DESCONOCIDO";
+            lastStatus1 = data.Status1;
+
+            estadoSpan.innerText     = status1;
+            potenciaSpan.innerText   = pot1 + " kW";
+            corrienteSpan.innerText  = amp1 + " A";
+            voltajeSpan.innerText    = volt1 + " V";
+            frecuenciaSpan.innerText = freq1 + " Hz";
+
+            // ====== VARIADOR 2 ======
+            const freq2 = (data.H200 / 100).toFixed(2);
+            const volt2 = data.H201.toFixed(0);
+            const amp2  = (data.H202 / 100).toFixed(2);
+            const pot2  = (data.H203 / 10).toFixed(2);
+            const status2 = data.Status2 || "DESCONOCIDO";
+            lastStatus2 = data.Status2;
+            estado2Span.innerText     = status2;
+            potencia2Span.innerText   = pot2 + " kW";
+            corriente2Span.innerText  = amp2 + " A";
+            voltaje2Span.innerText    = volt2 + " V";
+            frecuencia2Span.innerText = freq2 + " Hz";
+
+            // ====== SINCRONIZAR INPUT SOLO UNA VEZ ======
+            if (!sincronizadoProceso) {
+                const hmi_freq1 = (data.H105 / 100).toFixed(2);
+                const hmi_freq2 = (data.H205 / 100).toFixed(2);
+
+                inputFreqProceso.value = hmi_freq1;
+                inputFreq2Proceso.value = hmi_freq2;
+
+                sincronizadoProceso = true;
+
+                console.log("🔄 Sincronizado FRECUENCIAS:", hmi_freq1, hmi_freq2);
+            }
+
+        } else if (topic === topicIO) {
+            const rectV1  = document.getElementById("rectV1");
+            const rectV2Y0 = document.getElementById("rectV2Y0");
+            const rectV2Y1 = document.getElementById("rectV2Y1");
+            // ====== DIAGNOSTICO RECTANGULOS ======
+            const h300 = data.H300;
+            const h301 = data.H301;
+            const h302 = data.H302;
+            const h303 = data.H303;
+            const h304 = data.H304;
+            const h305 = data.H305;
+            const h306 = data.H306;
+            const h307 = data.H307;
+	    const h311 = data.H311;
+            const h313 = data.H313;
+            const presionpsi = (data.H312 / 100).toFixed(2);
+	    presionpsiSpan.innerText = presionpsi + " psi";
+
+	    if (h307 == 1) {
+  	    alarmaImg.style.display = "block";
+	    } else {
+            alarmaImg.style.display = "none";
+            }
+            // ====== RECTÁNGULO 1 → SOLO STATUS V1 ======
+            if (lastStatus1 === "ENCENDIDO") {
+              rectV1.style.backgroundColor = "green";
+            } else {
+              rectV1.style.backgroundColor = "red";
+            }
+
+            // ====== RECTÁNGULO 2 → STATUS V2 + Y0 ======
+            if (lastStatus2 === "ENCENDIDO" && h304 == 1) {
+               rectV2Y0.style.backgroundColor = "green";
+            } else {
+               rectV2Y0.style.backgroundColor = "red";
+            }
+
+            // ====== RECTÁNGULO 3 → STATUS V2 + Y1 ======
+            if (lastStatus2 === "ENCENDIDO" && h305 == 1) {
+            rectV2Y1.style.backgroundColor = "green";
+            } else {
+                rectV2Y1.style.backgroundColor = "red";
+            }
+	function setRectColor(rectId, valor, tanqueImgId) {
+   	   const rect = document.getElementById(rectId);
+   	   if (!rect) return;
+
+  	   rect.style.backgroundColor = valor ? "green" : "red";
+
+   	   // Mostrar u ocultar imagen del tanque si se pasa el ID
+  	   if(tanqueImgId) {
+    	     const img = document.getElementById(tanqueImgId);
+      	     if(img) img.style.display = valor ? "block" : "none";
+    	   }
+	}
+
+	// ENTRADAS (tanques)
+	setRectColor("rect1", h300, "tanque1Img"); // X0 → tanque 1
+	setRectColor("rect2", h301, "tanque2Img"); // X1 → tanque 2
+	setRectColor("rect3", h302, "tanque3Img"); // X2 → tanque 3
+	setRectColor("rect4", h303);               // X3 → solo rectángulo, sin imagen
+
+            // SALIDAS
+            setRectColor("rect5", h304);
+            setRectColor("rect6", h305);
+            setRectColor("rect7", h304);
+            setRectColor("rect8", h305);
+            setRectColor("rect9", h306);
+            setRectColor("rect10", h311);
+            setRectColor("rect11", h313);
+            // ====== SINCRONIZAR INPUTS H308, H309, H310 SOLO UNA VEZ ======
+            if (!sincronizadoIO) {
+                const hmi_retardopresion = (data.H308 / 10).toFixed(1);
+                const hmi_presionminima  = (data.H309 / 100).toFixed(2);
+                const hmi_reintentos     = (data.H310 / 1).toFixed(0);
+
+                inputRetardoPresion.value = hmi_retardopresion;
+                inputPresionMinima.value  = hmi_presionminima;
+                inputReintentos.value     = hmi_reintentos;
+
+                sincronizadoIO = true;
+                console.log("🔄 Sincronizado I/O:", hmi_retardopresion, hmi_presionminima, hmi_reintentos);
+            }
+        }
+
+    } catch(e) {
+        console.error("Error parseando JSON:", e);
+    }
+});
+
+</script>
+
+<script>
+const topicControl = "lurin/factory/bombas"; 
+
+// === INPUTS EXISTENTES VARIADOR 1 y 2 ===
+const inputFreqProceso = document.getElementById("inputFreqProceso");
+const inputFreq2Proceso = document.getElementById("inputFreq2Proceso");
+
+// === NUEVOS INPUTS PARAMETROS ===
+const inputRetardoPresion = document.getElementById("inputRetardoPresion");
+const inputPresionMinima  = document.getElementById("inputPresionMinima");
+const inputReintentos = document.getElementById("inputReintentos");
+
+// =======================
+//   LIMITES MIENTRAS ESCRIBE
+// =======================
+inputFreqProceso.addEventListener("input", () => {
+    let v = parseFloat(inputFreqProceso.value);
+    if (isNaN(v)) return;
+    if (v < 0) inputFreqProceso.value = 0;
+    if (v > 60) inputFreqProceso.value = 60;
+});
+inputFreq2Proceso.addEventListener("input", () => {
+    let v = parseFloat(inputFreq2Proceso.value);
+    if (isNaN(v)) return;
+    if (v < 0) inputFreq2Proceso.value = 0;
+    if (v > 50) inputFreq2Proceso.value = 50;
+});
+inputRetardoPresion.addEventListener("input", () => {
+    let v = parseFloat(inputRetardoPresion.value);
+    if (isNaN(v)) return;
+    if (v < 0.0) inputRetardoPresion.value = 0.0;
+    if (v > 60.0) inputRetardoPresion.value = 60.0;
+});
+inputPresionMinima.addEventListener("input", () => {
+    let v = parseFloat(inputPresionMinima.value);
+    if (isNaN(v)) return;
+    if (v < 0.00) inputPresionMinima.value = 0.00;
+    if (v > 145.00) inputPresionMinima.value = 145.00;
+});
+inputReintentos.addEventListener("input", () => {
+    let v = parseInt(inputReintentos.value);
+    if (isNaN(v)) return;
+    if (v < 1) inputReintentos.value = 1;
+    if (v > 10) inputReintentos.value = 10;
+});
+
+// =======================
+//   AL PERDER FOCO → FORMATEAR + PUBLICAR MQTT
+// =======================
+inputFreqProceso.addEventListener("blur", () => {
+    let v = parseFloat(inputFreqProceso.value) || 0;
+    v = Math.min(60, Math.max(0, v));
+    inputFreqProceso.value = v.toFixed(2);
+    if(client.connected){
+        client.publish(topicControl, "variador1freq:" + v.toFixed(2));
+    }
+});
+inputFreq2Proceso.addEventListener("blur", () => {
+    let v = parseFloat(inputFreq2Proceso.value) || 0;
+    v = Math.min(50, Math.max(0, v));
+    inputFreq2Proceso.value = v.toFixed(2);
+    if(client.connected){
+        client.publish(topicControl, "variador2freq:" + v.toFixed(2));
+    }
+});
+inputRetardoPresion.addEventListener("blur", () => {
+    let v = parseFloat(inputRetardoPresion.value) || 0.0;
+    v = Math.min(60.0, Math.max(0.0, v));
+    inputRetardoPresion.value = v.toFixed(1);
+    if(client.connected){
+        client.publish(topicControl, "retardoPresion:" + v.toFixed(1));
+    }
+});
+inputPresionMinima.addEventListener("blur", () => {
+    let v = parseFloat(inputPresionMinima.value) || 0.00;
+    v = Math.min(145.00, Math.max(0.00, v));
+    inputPresionMinima.value = v.toFixed(2);
+    if(client.connected){
+        client.publish(topicControl, "presionMinima:" + v.toFixed(2));
+    }
+});
+inputReintentos.addEventListener("blur", () => {
+    let v = parseInt(inputReintentos.value) || 1;
+    v = Math.min(10, Math.max(1, v));
+    inputReintentos.value = v;
+    if(client.connected){
+        client.publish(topicControl, "cantidadReintentos:" + v);
+    }
+});
+
+// =======================
+//   BOTONES MQTT
+// =======================
+document.querySelectorAll('.boton-mqtt').forEach(btn => {
+    btn.onclick = () => {
+        const msg = btn.dataset.msg;
+        if(client && client.connected){
+            client.publish(topicControl, msg);
+            console.log("📤 Enviado MQTT:", msg);
+        } else {
+            console.warn("⚠️ Cliente MQTT no conectado");
+        }
+    };
+});
+</script>
+</body>
+</html>
+
+

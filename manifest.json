@@ -1,0 +1,21 @@
+{
+  "name": "DARIZA SCADA IOT",
+  "short_name": "Daryza bombas",
+  "start_url": "/DARIZASCADAIOT/",
+  "scope": "/DARIZASCADAIOT/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    {
+      "src": "/DARIZASCADAIOT/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/DARIZASCADAIOT/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
